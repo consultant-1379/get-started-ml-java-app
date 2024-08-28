@@ -1,0 +1,82 @@
+#
+# COPYRIGHT Ericsson 2023
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "eric-oss-get-started-ml-java-app-init.name" . }}-rbac-configuration
+  labels:
+  {{- include "eric-oss-get-started-ml-java-app-init.labels" . | nindent 4 }}
+  annotations:
+  {{- include "eric-oss-get-started-ml-java-app-init.annotations" . | nindent 4 }}
+data:
+  rbac_configuration.json: |
+    {
+      "roles": [
+        {
+          "name": "GetStartedMLApp_Admin",
+          "attributes": {
+            "type": [
+              "internal"
+            ]
+          }
+        }
+      ],
+      "authorization": {
+        "resources": [
+          {
+            "name": "GetStartedMLApp Operations",
+            "type": "urn:eo:eric-oss-get-started-ml-java-app:resources:operations",
+            "ownerManagedAccess": false,
+            "uris": [
+              "/seldon/{{ .Release.Namespace }}/{{ .Values.model.name }}/**"
+            ],
+            "scopes": [
+              {
+                "name": "POST"
+              }
+            ]
+          }
+        ],
+        "policies": [
+          {
+            "name": "Is GetStartedMLApp Admin",
+            "type": "role",
+            "logic": "POSITIVE",
+            "decisionStrategy": "UNANIMOUS",
+            "config": {
+              "roles": "[{\"id\":\"GetStartedMLApp_Admin\",\"required\":false}]"
+            }
+          },
+          {
+            "name": "Operate GetStartedMLApp",
+            "type": "scope",
+            "logic": "POSITIVE",
+            "decisionStrategy": "AFFIRMATIVE",
+            "config": {
+              "resources": "[\"GetStartedMLApp Operations\"]",
+              "scopes": "[\"POST\"]",
+              "applyPolicies": "[\"Is GetStartedMLApp Admin\"]"
+            }
+          }
+        ],
+        "scopes": [
+          {
+            "name": "POST"
+          }
+        ]
+      }
+    }

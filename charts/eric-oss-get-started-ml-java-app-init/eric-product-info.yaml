@@ -1,0 +1,33 @@
+#
+# COPYRIGHT Ericsson 2023
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+productName: "eric-oss-get-started-ml-java-app-init"
+productNumber: "CXC 000 0000"
+images:
+  keycloak-client:
+    productName: "Client for Keycloak Interaction"
+    productNumber: "CXU 000 0000"
+    registry: "armdocker.rnd.ericsson.se"
+    repoPath: "proj-orchestration-so"
+    name: "keycloak-client"
+    tag: "1.0.0-hf9c347c"
+  eric-api-gateway-client:
+    productName: "Client for API Gateway"
+    productNumber: "CXU 000 0000"
+    registry: "armdocker.rnd.ericsson.se"
+    repoPath: "proj-eric-oss-drop"
+    name: "eric-api-gateway-client"
+    tag: "1.0.51-1"

@@ -1,0 +1,4 @@
+# this version is tied to Model LCM's version of the bundled Seldon
+seldon-core==1.16.0
+joblib
+scikit-learn

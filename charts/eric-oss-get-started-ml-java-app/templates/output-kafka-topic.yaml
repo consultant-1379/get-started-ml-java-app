@@ -1,0 +1,32 @@
+#
+# COPYRIGHT Ericsson 2021
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: {{ template "eric-oss-get-started-ml-java-app.name" . }}-topic-out
+  labels:
+    {{- $kafka := "strimzi.io/cluster: eric-oss-dmm-kf-op-sz" | fromYaml }}
+    {{- $labels := include "eric-oss-get-started-ml-java-app.labels" .| fromYaml }}
+    {{- include "eric-oss-get-started-ml-java-app.mergeLabels" (dict "location" .Template.Name "sources" (list $kafka $labels)) | trim | nindent 4 }}
+  annotations:
+    {{- include "eric-oss-get-started-ml-java-app.annotations" .| nindent 4 }}
+spec:
+  partitions: {{ .Values.spring.kafka.topics.partitions }}
+  replicas: {{ .Values.spring.kafka.topics.replicas }}
+  config:
+    retention.ms: {{ .Values.spring.kafka.topics.retention_ms }}
+    segment.bytes: {{ .Values.spring.kafka.topics.segment_in_bytes }}

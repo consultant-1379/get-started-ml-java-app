@@ -1,0 +1,91 @@
+#
+# COPYRIGHT Ericsson 2023
+#
+#
+#
+# The copyright to the computer program(s) herein is the property of
+#
+# Ericsson Inc. The programs may be used and/or copied only with written
+#
+# permission from Ericsson Inc. or in accordance with the terms and
+#
+# conditions stipulated in the agreement/contract under which the
+#
+# program(s) have been supplied.
+#
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "eric-oss-get-started-ml-java-app-init.name" . }}-create-user-role-mappings
+  labels:
+    {{- include "eric-oss-get-started-ml-java-app-init.labels" . | nindent 4 }}
+  annotations:
+    {{- include "eric-oss-get-started-ml-java-app-init.annotations" . | nindent 4 }}
+    "helm.sh/hook": pre-install, pre-upgrade
+    "helm.sh/hook-weight": "10"
+    "helm.sh/hook-delete-policy": before-hook-creation, hook-succeeded, hook-failed
+spec:
+  template:
+    metadata:
+      labels: {{- include "eric-oss-get-started-ml-java-app-init.labels" . | nindent 8 }}
+      annotations: {{- include "eric-oss-get-started-ml-java-app-init.annotations" . | nindent 8 }}
+    spec:
+      {{- if include "eric-oss-get-started-ml-java-app-init.pullSecret" . }}
+      imagePullSecrets:
+        - name: {{ include "eric-oss-get-started-ml-java-app-init.pullSecret" . | quote }}
+      {{- end }}
+      restartPolicy: Never
+      containers:
+        - name: keycloak-client
+          image: {{ include "eric-oss-get-started-ml-java-app-init.imagePath" (set . "ImageKey" "keycloak-client") }}
+          imagePullPolicy: {{ template "eric-oss-get-started-ml-java-app-init.registryImagePullPolicy" . }}
+          env:
+            - name: IAM_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.iam.adminSecret | quote }}
+                  key: {{ .Values.global.iam.userKey | quote }}
+            - name: IAM_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.global.iam.adminSecret | quote }}
+                  key: {{ .Values.global.iam.passwordKey | quote }}
+            - name: FUNCTIONAL_USER
+              value: {{ .Values.global.createdUser.username | quote }}
+          args:
+            - "create"
+            - "user_realm_role_mappings"
+            - "--keycloak_hostname={{ .Values.global.hosts.iam }}"
+            - "--keycloak_user=$(IAM_ADMIN_USER)"
+            - "--keycloak_password=$(IAM_ADMIN_PASSWORD)"
+            - "--username=$(FUNCTIONAL_USER)"
+            - "--config=/config/role-mappings.json"
+          volumeMounts:
+            - name: {{ include "eric-oss-get-started-ml-java-app-init.name" . }}-user-role-mappings-volume
+              mountPath: /config
+            - name: create-cacert-volume
+              mountPath: /mnt/certs
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: true
+            runAsNonRoot: true
+      {{- if (index .Values "podPriority" "eric-oss-get-started-ml-java-app-init-create-user-role-mappings" "priorityClassName") }}
+      priorityClassName: {{ (index .Values "podPriority" "eric-oss-get-started-ml-java-app-init-create-user-role-mappings" "priorityClassName") }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- include "eric-oss-get-started-ml-java-app-init.tolerations" . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: {{ include "eric-oss-get-started-ml-java-app-init.name" . }}-user-role-mappings-volume
+          configMap:
+            name: {{ include "eric-oss-get-started-ml-java-app-init.name" . }}-user-realm-role-mappings
+            defaultMode: 0440
+        - name: create-cacert-volume
+          secret:
+            secretName: {{ .Values.global.iam.cacert.secretName }}
+            items:
+              - key: {{ .Values.global.iam.cacert.key }}
+                path: {{ .Values.global.iam.cacert.filePath }}
+      {{ include "eric-oss-get-started-ml-java-app-init.nodeSelector" . | nindent 6 -}}
